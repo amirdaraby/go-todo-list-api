@@ -16,3 +16,4 @@ go.work.sum
 app
 go-todo-list-api
 
+.data

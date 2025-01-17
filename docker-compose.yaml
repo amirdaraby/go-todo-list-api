@@ -2,9 +2,7 @@ services:
   app:
     container_name: ${APP_NAME}_app
     build:
-      context: docker/go
-    volumes:
-      - .:/app
+      context: .
     ports:
       - ${APP_EXTERNAL_PORT}:${APP_PORT}
   db:
@@ -13,6 +11,6 @@ services:
     ports:
       - ${DB_EXTERNAL_PORT}:${DB_PORT}
     volumes:
-      - ./mysql_data:/var/lib/mysql
+      - ./.data:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
