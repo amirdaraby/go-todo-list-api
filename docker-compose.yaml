@@ -1,0 +1,18 @@
+services:
+  app:
+    container_name: ${APP_NAME}_app
+    build:
+      context: docker/go
+    volumes:
+      - .:/app
+    ports:
+      - ${APP_EXTERNAL_PORT}:${APP_PORT}
+  db:
+    container_name: ${APP_NAME}_mysql
+    image: mysql:8
+    ports:
+      - ${DB_EXTERNAL_PORT}:${DB_PORT}
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
