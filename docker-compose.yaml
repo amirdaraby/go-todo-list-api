@@ -6,7 +6,8 @@ services:
     ports:
       - ${APP_EXTERNAL_PORT}:${APP_PORT}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
   db:
     container_name: ${APP_NAME}_mysql
     image: mysql:8
@@ -17,3 +18,8 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 2
