@@ -5,6 +5,8 @@ services:
       context: .
     ports:
       - ${APP_EXTERNAL_PORT}:${APP_PORT}
+    volumes:
+      - .:/go/src/app
   db:
     container_name: ${APP_NAME}_mysql
     image: mysql:8
