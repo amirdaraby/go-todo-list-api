@@ -11,6 +11,6 @@ services:
     ports:
       - ${DB_EXTERNAL_PORT}:${DB_PORT}
     volumes:
-      - ./.data:/var/lib/mysql
+      - ./.data/db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
