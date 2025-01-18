@@ -12,6 +12,8 @@ COPY . .
 RUN go get -d -v ./...
 RUN go install -v ./...
 
+RUN rm -f go-todo-list-api
+
 RUN go build . 
 
 CMD ["./go-todo-list-api"]

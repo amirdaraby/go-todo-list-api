@@ -5,8 +5,8 @@ services:
       context: .
     ports:
       - ${APP_EXTERNAL_PORT}:${APP_PORT}
-    volumes:
-      - .:/go/src/app
+    depends_on:
+      - db
   db:
     container_name: ${APP_NAME}_mysql
     image: mysql:8
@@ -16,3 +16,4 @@ services:
       - ./.data/db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
