@@ -8,6 +8,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var database *gorm.DB
+
 func Init(c config.Config) (db *gorm.DB, err error) {
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", c.DbUsername, c.DbPassword, c.DbHost, c.DbPort, c.DbName)
@@ -20,5 +22,16 @@ func Init(c config.Config) (db *gorm.DB, err error) {
 
 	err = AutoMigrate(db)
 
+	database = db
+
 	return
+}
+
+func GetDb() *gorm.DB {
+
+	if database == nil {
+		panic("database hasn't initialized yet")
+	}
+
+	return database
 }
