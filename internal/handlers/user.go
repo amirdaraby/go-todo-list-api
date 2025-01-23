@@ -8,6 +8,7 @@ import (
 	"github.com/amirdaraby/go-todo-list-api/internal/auth"
 	"github.com/amirdaraby/go-todo-list-api/internal/db"
 	"github.com/amirdaraby/go-todo-list-api/internal/models"
+	"github.com/amirdaraby/go-todo-list-api/internal/utils/jsonresponse"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -33,7 +34,7 @@ func ShowUser(w http.ResponseWriter, r *http.Request) {
 	tx := gorm.Model(user).Where("id = ?", userId).First(&user)
 
 	if tx.RowsAffected != 1 {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		jsonresponse.New().SetMessage(jsonresponse.BadRequestMessage).Failed(w, http.StatusBadRequest)
 		return
 	}
 
@@ -42,15 +43,7 @@ func ShowUser(w http.ResponseWriter, r *http.Request) {
 		UserName: user.UserName,
 	}
 
-	marshalledResponse, err := json.Marshal(response)
-
-	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(marshalledResponse)
+	jsonresponse.New().SetData(response).Success(w, http.StatusOK)
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +53,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&updatedUser)
 
 	if err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		jsonresponse.New().SetMessage(jsonresponse.BadRequestMessage).Failed(w, http.StatusBadRequest)
 		return
 	}
 
@@ -70,7 +63,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		errors := err.(validator.ValidationErrors)
-		http.Error(w, fmt.Sprintf("Validation failed: %s", errors), http.StatusUnprocessableEntity)
+		jsonresponse.New().SetMessage(fmt.Sprintf("Validation failed: %s", errors)).Failed(w, http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -81,7 +74,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	tx := gorm.Model(&user).Where("id = ?", r.Context().Value(auth.AuthIdKey("user_id"))).First(&user)
 
 	if tx.RowsAffected != 1 {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		jsonresponse.New().SetMessage(jsonresponse.BadRequestMessage).Failed(w, http.StatusBadRequest)
 		return
 	}
 
@@ -89,7 +82,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedUser.Password), bcrypt.DefaultCost)
 
 		if err != nil {
-			http.Error(w, "Internal error", http.StatusInternalServerError)
+			jsonresponse.New().SetMessage(jsonresponse.BadRequestMessage).Failed(w, http.StatusBadRequest)
 			return
 		}
 		user.Password = string(hashedPassword)
@@ -101,7 +94,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		tx = gorm.Model(&userWithUserName).Where("user_name = ?", updatedUser.UserName)
 
 		if tx.RowsAffected != 0 {
-			http.Error(w, "username is picked by other user", http.StatusBadRequest)
+			jsonresponse.New().SetMessage("user_name is picked by other user").Failed(w, http.StatusBadRequest)
 			return
 		}
 		user.UserName = updatedUser.UserName
@@ -109,6 +102,5 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	gorm.Save(&user)
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("success"))
+	jsonresponse.New().SetMessage("user updated").Success(w, http.StatusAccepted)
 }

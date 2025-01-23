@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/amirdaraby/go-todo-list-api/internal/auth"
 	"github.com/amirdaraby/go-todo-list-api/internal/db"
 	"github.com/amirdaraby/go-todo-list-api/internal/models"
+	"github.com/amirdaraby/go-todo-list-api/internal/utils/jsonresponse"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,7 +20,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&user)
 
 	if err != nil {
-		http.Error(w, "Invalid body", http.StatusBadRequest)
+		jsonresponse.New().SetMessage(jsonresponse.BadRequestMessage).Failed(w, http.StatusBadRequest)
 		return
 	}
 
@@ -30,7 +30,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		errors := err.(validator.ValidationErrors)
-		http.Error(w, fmt.Sprintf("Validation failed: %s", errors), http.StatusUnprocessableEntity)
+		jsonresponse.New().SetMessage(fmt.Sprintf("Validation failed: %s", errors)).Failed(w, http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -39,14 +39,14 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	tx := gorm.Model(user).Where("user_name = ?", user.UserName).First(&user)
 
 	if tx.RowsAffected != 0 {
-		http.Error(w, "Username already exists", http.StatusBadRequest)
+		jsonresponse.New().SetMessage("user_name is picked by other user").Failed(w, http.StatusBadRequest)
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 
 	if err != nil {
-		http.Error(w, "Internal error", http.StatusInternalServerError)
+		jsonresponse.New().SetMessage(jsonresponse.InternalServerErrorMessage).Failed(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -55,12 +55,11 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	tx = gorm.Model(user).Create(&user)
 
 	if tx.RowsAffected != 1 {
-		http.Error(w, "Internal error", http.StatusInternalServerError)
+		jsonresponse.New().SetMessage(jsonresponse.InternalServerErrorMessage).Failed(w, http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("User created successfuly"))
+	jsonresponse.New().SetMessage("user created").Success(w, http.StatusCreated)
 }
 
 func LoginUser(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +67,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	bodyString, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		jsonresponse.New().SetMessage(jsonresponse.BadRequestMessage).Failed(w, http.StatusBadRequest)
 		return
 	}
 
@@ -80,7 +79,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(bodyString, &body)
 
 	if err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		jsonresponse.New().SetMessage(jsonresponse.BadRequestMessage).Failed(w, http.StatusBadRequest)
 		return
 	}
 
@@ -91,22 +90,21 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	tx := gorm.Model(user).Where("user_name = ?", body.UserName).First(&user)
 
 	if tx.RowsAffected != 1 {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		jsonresponse.New().SetMessage(jsonresponse.BadRequestMessage).Failed(w, http.StatusBadRequest)
 		return
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 
 	if err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		jsonresponse.New().SetMessage(jsonresponse.BadRequestMessage).Failed(w, http.StatusBadRequest)
 		return
 	}
 
 	token, err := auth.NewToken(user.ID)
 
 	if err != nil {
-		log.Fatalln(err)
-		http.Error(w, "Internal error", http.StatusInternalServerError)
+		jsonresponse.New().SetMessage(jsonresponse.InternalServerErrorMessage).Failed(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -116,13 +114,5 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	response.Token = token
 
-	marshalledResponse, err := json.Marshal(response)
-
-	if err != nil {
-		http.Error(w, "Internal error", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(marshalledResponse)
+	jsonresponse.New().SetMessage("login successful").SetData(response).Success(w, http.StatusOK)
 }
