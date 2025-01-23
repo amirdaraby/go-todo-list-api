@@ -10,6 +10,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type AuthIdKey string
+
 func NewToken(userId uint) (string, error) {
 
 	config := config.Get()

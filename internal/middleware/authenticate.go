@@ -7,9 +7,7 @@ import (
 	"github.com/amirdaraby/go-todo-list-api/internal/auth"
 )
 
-type AuthIdKey string
-
-func AuthenticateMiddleware(next http.Handler) http.Handler {
+func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 
@@ -25,7 +23,7 @@ func AuthenticateMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		var userIdKey AuthIdKey = "user_id"
+		var userIdKey auth.AuthIdKey = "user_id"
 
 		ctx := context.WithValue(r.Context(), userIdKey, userId)
 
@@ -33,7 +31,7 @@ func AuthenticateMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func GuestMiddleware(next http.Handler) http.Handler {
+func Guest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if authHeader := r.Header.Get("Authorization"); authHeader != "" {
 			http.Error(w, "Guest only", http.StatusForbidden)
