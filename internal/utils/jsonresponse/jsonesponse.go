@@ -15,6 +15,7 @@ const (
 	BadRequestMessage          = "bad request"
 	UnauthorizedMessage        = "unauthorized"
 	InternalServerErrorMessage = "internal server error"
+	NotFoundMessage            = "not found"
 )
 
 type response struct {

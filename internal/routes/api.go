@@ -30,5 +30,15 @@ func Init() *mux.Router {
 	userApis.HandleFunc("", handlers.ShowUser).Methods("GET")
 	userApis.HandleFunc("", handlers.UpdateUser).Methods("PATCH")
 
+	taskApis := userApis.PathPrefix("/tasks").Subrouter()
+	taskApis.HandleFunc("", handlers.IndexTask).Methods("GET")
+	taskApis.HandleFunc("/undone", handlers.IndexUnDoneTasks).Methods("GET")
+	taskApis.HandleFunc("/done", handlers.IndexDoneTasks).Methods("GET")
+	taskApis.HandleFunc("", handlers.StoreTask).Methods("POST")
+	taskApis.HandleFunc("/{id}", handlers.ShowTask).Methods("GET")
+	taskApis.HandleFunc("/{id}", handlers.DeleteTask).Methods("DELETE")
+	taskApis.HandleFunc("/{id}", handlers.UpdateTask).Methods("PATCH")
+	taskApis.HandleFunc("/{id}/toggle-done-status", handlers.ToggleDoneTask).Methods("POST")
+
 	return r
 }
