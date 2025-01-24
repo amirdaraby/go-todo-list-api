@@ -11,6 +11,7 @@ import (
 	"github.com/amirdaraby/go-todo-list-api/internal/auth"
 	"github.com/amirdaraby/go-todo-list-api/internal/db"
 	"github.com/amirdaraby/go-todo-list-api/internal/models"
+	"github.com/amirdaraby/go-todo-list-api/internal/paginator"
 	"github.com/amirdaraby/go-todo-list-api/internal/utils/jsonresponse"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -28,14 +29,14 @@ func IndexTask(w http.ResponseWriter, r *http.Request) {
 
 	var tasks []models.Task
 
-	tx := gorm.Model(&models.Task{}).Where("user_id = ?", userId).Order("id DESC").Find(&tasks)
+	tx := gorm.Scopes(paginator.Paginate(r)).Model(&models.Task{}).Where("user_id = ?", userId).Order("id DESC").Find(&tasks)
 
 	if tx.RowsAffected < 1 {
 		jsonresponse.New().SetMessage("no tasks found").Failed(w, http.StatusNotFound)
 		return
 	}
 
-	jsonresponse.New().SetData(tasks).SetMessage("all tasks").Success(w, http.StatusOK)
+	jsonresponse.New().SetData(tasks).SetMessage("all tasks").SuccessWithPagination(w, r, http.StatusOK)
 }
 
 func IndexUnDoneTasks(w http.ResponseWriter, r *http.Request) {
@@ -45,14 +46,14 @@ func IndexUnDoneTasks(w http.ResponseWriter, r *http.Request) {
 
 	var tasks []models.Task
 
-	tx := gorm.Model(&models.Task{}).Where("user_id = ?", userId).Where("done_at IS NULL").Order("id DESC").Find(&tasks)
+	tx := gorm.Scopes(paginator.Paginate(r)).Model(&models.Task{}).Where("user_id = ?", userId).Where("done_at IS NULL").Order("id DESC").Find(&tasks)
 
 	if tx.RowsAffected < 1 {
 		jsonresponse.New().SetMessage("no undone tasks found").Failed(w, http.StatusNotFound)
 		return
 	}
 
-	jsonresponse.New().SetData(tasks).SetMessage("undone tasks").Success(w, http.StatusOK)
+	jsonresponse.New().SetData(tasks).SetMessage("undone tasks").SuccessWithPagination(w, r, http.StatusOK)
 }
 
 func IndexDoneTasks(w http.ResponseWriter, r *http.Request) {
@@ -62,14 +63,14 @@ func IndexDoneTasks(w http.ResponseWriter, r *http.Request) {
 
 	var tasks []models.Task
 
-	tx := gorm.Model(&models.Task{}).Where("user_id = ?", userId).Where("done_at IS NOT NULL").Order("id DESC").Find(&tasks)
+	tx := gorm.Scopes(paginator.Paginate(r)).Model(&models.Task{}).Where("user_id = ?", userId).Where("done_at IS NOT NULL").Order("id DESC").Find(&tasks)
 
 	if tx.RowsAffected < 1 {
 		jsonresponse.New().SetMessage("no done tasks found").Failed(w, http.StatusNotFound)
 		return
 	}
 
-	jsonresponse.New().SetData(tasks).SetMessage("done tasks").Success(w, http.StatusOK)
+	jsonresponse.New().SetData(tasks).SetMessage("done tasks").SuccessWithPagination(w, r, http.StatusOK)
 }
 
 func StoreTask(w http.ResponseWriter, r *http.Request) {
